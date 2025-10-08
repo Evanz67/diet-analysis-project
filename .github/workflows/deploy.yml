@@ -50,6 +50,10 @@ jobs:
     - name: Install pandas for testing
       run: |
         pip install pandas
+    
+    - name: Install matplotlib for testing
+      run: |
+        pip install matplotlib
         
     - name: Run import test
       run: |
@@ -57,6 +61,8 @@ jobs:
         try:
             import pandas as pd
             print('pandas imported successfully')
+            import matplotlib.pyplot as plt
+            print('matplotlib imported successfully')
             
             # Test basic pandas functionality
             df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
