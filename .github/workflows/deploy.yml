@@ -22,16 +22,16 @@ jobs:
         
     - name: Install dependencies for testing
       run: |
-        pip install pandas pylint pytest
+        pip install pandas pylint pytest matplotlib
         
     - name: Syntax check
       run: |
-        python -m py_compile diet_analysis.py
+        python -m py_compile data_analysis.py
         echo "Python syntax is valid"
         
     - name: Code linting
       run: |
-        pylint diet_analysis.py --disable=C0114,C0115,C0116 || true
+        pylint data_analysis.py --disable=C0114,C0115,C0116 || true
 
   basic-tests:
     name: Basic Functionality Tests
@@ -63,8 +63,8 @@ jobs:
             print('DataFrame creation works')
             
             # Test if our script can be imported
-            import diet_analysis
-            print('diet_analysis.py can be imported')
+            import data_analysis
+            print('data_analysis.py can be imported')
             
         except Exception as e:
             print(f'Import test failed: {e}')
@@ -89,7 +89,7 @@ jobs:
         "
         
         # Test if script runs without errors (timeout after 30 seconds)
-        timeout 30s python diet_analysis.py || echo "Script execution completed or timed out"
+        timeout 30s python data_analysis.py || echo "Script execution completed or timed out"
 
   build:
     name: Build Docker Image
