@@ -120,7 +120,7 @@ jobs:
         size=$(docker image inspect diet-analysis:latest --format='{{.Size}}')
         echo "Docker image size: $size bytes"
         if [ $size -gt 500000000 ]; then
-          echo "Image size is large
+          echo "Image size is large"
         else
           echo "Image size is reasonable"
         fi
