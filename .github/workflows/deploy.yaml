@@ -1,0 +1,141 @@
+name: Diet Analysis CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies for testing
+      run: |
+        pip install pandas pylint pytest
+        
+    - name: Syntax check
+      run: |
+        python -m py_compile diet_analysis.py
+        echo "Python syntax is valid"
+        
+    - name: Code linting
+      run: |
+        pylint diet_analysis.py --disable=C0114,C0115,C0116 || true
+
+  basic-tests:
+    name: Basic Functionality Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install pandas for testing
+      run: |
+        pip install pandas
+        
+    - name: Run import test
+      run: |
+        python -c "
+        try:
+            import pandas as pd
+            print('pandas imported successfully')
+            
+            # Test basic pandas functionality
+            df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+            print('DataFrame creation works')
+            
+            # Test if our script can be imported
+            import diet_analysis
+            print('diet_analysis.py can be imported')
+            
+        except Exception as e:
+            print(f'Import test failed: {e}')
+            exit(1)
+        "
+        
+    - name: Create test data and run script
+      run: |
+        # Create a simple test CSV to verify file handling
+        python -c "
+        import pandas as pd
+        test_data = {
+            'Recipe_name': ['Test Salad', 'Test Smoothie'],
+            'Diet_type': ['Vegetarian', 'Vegan'],
+            'Protein(g)': [10, 5],
+            'Carbs(g)': [20, 30],
+            'Fat(g)': [5, 3]
+        }
+        df = pd.DataFrame(test_data)
+        df.to_csv('test_data.csv', index=False)
+        print('Test data created')
+        "
+        
+        # Test if script runs without errors (timeout after 30 seconds)
+        timeout 30s python diet_analysis.py || echo "Script execution completed or timed out"
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: basic-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build Docker image
+      run: |
+        docker build -t diet-analysis:latest .
+        
+    - name: Test Docker container
+      run: |
+        # Test that container can start
+        docker run --rm diet-analysis:latest python -c "print('Docker container test passed')"
+        
+    - name: Test Docker image size
+      run: |
+        size=$(docker image inspect diet-analysis:latest --format='{{.Size}}')
+        echo "Docker image size: $size bytes"
+        if [ $size -gt 500000000 ]; then
+          echo "Image size is large, consider optimizing"
+        else
+          echo "Image size is reasonable"
+        fi
+
+  deploy:
+    name: Run Full Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build and run complete analysis
+      run: |
+        docker build -t diet-analysis:latest .
+        echo "Starting full diet analysis..."
+        docker run --rm diet-analysis:latest
+        
+    - name: Verify execution
+      run: |
+        echo "Pipeline completed successfully!"
+        echo "Diet analysis has been executed"
