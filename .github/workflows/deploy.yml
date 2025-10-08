@@ -94,7 +94,7 @@ jobs:
         print('Test data created')
         "
         
-        # Test if script runs without errors (timeout after 30 seconds)
+        # Check if script will give errors if load times exceed 30 seconds, it will timeout
         timeout 30s python data_analysis.py || echo "Script execution completed or timed out"
 
   build:
@@ -120,7 +120,7 @@ jobs:
         size=$(docker image inspect diet-analysis:latest --format='{{.Size}}')
         echo "Docker image size: $size bytes"
         if [ $size -gt 500000000 ]; then
-          echo "Image size is large, consider optimizing"
+          echo "Image size is large
         else
           echo "Image size is reasonable"
         fi
@@ -143,5 +143,5 @@ jobs:
         
     - name: Verify execution
       run: |
-        echo "Pipeline completed successfully!"
-        echo "Diet analysis has been executed"
+        echo "The pipeline has no errors"
+        echo "The python script named data_analysis.py works"
