@@ -145,3 +145,33 @@ jobs:
       run: |
         echo "The pipeline has no errors"
         echo "The python script named data_analysis.py works"
+  
+  deploy-proof:
+    name: Deployment Evidence
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: build image
+      run: docker build -t diet-app .
+      
+    - name: Run deployment and capture proof
+      run: |
+        echo "Starting deployment at $(date)" > deployment-proof.txt
+        docker run --rm diet-app >> deployment-proof.txt 2>&1
+        echo "Deployment completed at $(date)" >> deployment-proof.txt
+     
+    - name: Show deployment output
+      run: |
+        echo "DEPLOYMENT OUTPUT"
+        cat deployment-proof.txt
+        
+    - name: Save deployment evidence
+      uses: actions/upload-artifact@v4
+      with: 
+        name: deployment-proof
+        path: deployment-proof.txt
